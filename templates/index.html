@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>二维码生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .form-container {
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .form-group input,
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        /* 自定义下拉输入框样式 */
+        .custom-select {
+            position: relative;
+            width: 100%;
+        }
+
+        .custom-select-input {
+            width: 100%;
+            padding: 12px 40px 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            background: white;
+            cursor: pointer;
+        }
+
+        .custom-select-input:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .custom-select-arrow {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            transition: transform 0.3s ease;
+        }
+
+        .custom-select-arrow::before {
+            content: '▼';
+            color: #666;
+            font-size: 12px;
+        }
+
+        .custom-select.open .custom-select-arrow {
+            transform: translateY(-50%) rotate(180deg);
+        }
+
+        .custom-select-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #4facfe;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .custom-select.open .custom-select-dropdown {
+            display: block;
+        }
+
+        .custom-select-option {
+            padding: 12px 15px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .custom-select-option:last-child {
+            border-bottom: none;
+        }
+
+        .custom-select-option:hover {
+            background-color: #f8f9fa;
+        }
+
+        .custom-select-option.selected {
+            background-color: #4facfe;
+            color: white;
+        }
+
+        .custom-select-option.highlighted {
+            background-color: #e3f2fd;
+        }
+
+        .custom-select-no-results {
+            padding: 12px 15px;
+            color: #999;
+            font-style: italic;
+            text-align: center;
+        }
+
+        .file-upload {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-upload input[type=file] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-upload-label {
+            display: block;
+            padding: 12px 15px;
+            border: 2px dashed #e1e5e9;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .file-upload-label:hover {
+            border-color: #4facfe;
+            background: #f0f8ff;
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .loading .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4facfe;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result {
+            display: none;
+            text-align: center;
+            margin-top: 30px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .qr-image {
+            max-width: 300px;
+            margin: 20px auto;
+            border: 5px solid white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .download-btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .download-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .admin-link {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 20px;
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .admin-link:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .alert {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+            
+            .form-container {
+                padding: 20px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="javascript:void(0)" class="admin-link" onclick="window.location.href = buildApiUrl('/admin')">管理员入口</a>
+    
+    <div class="container">
+        <div class="header">
+            <h1>二维码生成器</h1>
+            <p>填写试块信息，生成专属二维码</p>
+        </div>
+        
+        <div class="form-container">
+            <div class="alert alert-success" id="successAlert"></div>
+            <div class="alert alert-error" id="errorAlert"></div>
+            
+            <form id="qrForm" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="specimen_number">试块编号 *</label>
+                    <input type="text" id="specimen_number" name="specimen_number" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="material">材质 *</label>
+                    <div class="custom-select" data-name="material">
+                        <input type="text" class="custom-select-input" id="material" name="material" placeholder="请选择或输入材质" required autocomplete="off">
+                        <div class="custom-select-arrow"></div>
+                        <div class="custom-select-dropdown"></div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="reflector_type">人工反射体类型 *</label>
+                    <div class="custom-select" data-name="reflector_type">
+                        <input type="text" class="custom-select-input" id="reflector_type" name="reflector_type" placeholder="请选择或输入反射体类型" required autocomplete="off">
+                        <div class="custom-select-arrow"></div>
+                        <div class="custom-select-dropdown"></div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="storage_area">存放区域 *</label>
+                    <div class="custom-select" data-name="storage_area">
+                        <input type="text" class="custom-select-input" id="storage_area" name="storage_area" placeholder="请选择或输入存放区域" required autocomplete="off">
+                        <div class="custom-select-arrow"></div>
+                        <div class="custom-select-dropdown"></div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="certificate">检验证书</label>
+                    <div class="file-upload">
+                        <input type="file" id="certificate" name="certificate">
+                        <label for="certificate" class="file-upload-label">
+                            <span id="file-label-text">点击选择文件或拖拽文件到此处</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <button type="submit" class="generate-btn" id="generateBtn">
+                    生成二维码
+                </button>
+            </form>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>正在生成二维码，请稍候...</p>
+            </div>
+            
+            <div class="result" id="result">
+                <h3>二维码生成成功！</h3>
+                <img id="qrImage" class="qr-image" alt="二维码">
+                <div>
+                    <a id="downloadBtn" class="download-btn" download>下载二维码</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局配置数据
+        let dropdownConfig = {};
+        let appConfig = { baseUrl: 'http://localhost:8000' }; // 应用配置，包含baseUrl
+        
+        // 自定义下拉框类
+        class CustomSelect {
+            constructor(element) {
+                this.element = element;
+                this.input = element.querySelector('.custom-select-input');
+                this.dropdown = element.querySelector('.custom-select-dropdown');
+                this.arrow = element.querySelector('.custom-select-arrow');
+                this.name = element.dataset.name;
+                this.options = [];
+                this.filteredOptions = [];
+                this.selectedIndex = -1;
+                this.isOpen = false;
+                
+                this.init();
+            }
+            
+            init() {
+                // 绑定事件
+                this.input.addEventListener('click', () => this.toggle());
+                this.input.addEventListener('input', (e) => this.handleInput(e));
+                this.input.addEventListener('keydown', (e) => this.handleKeydown(e));
+                this.input.addEventListener('blur', (e) => this.handleBlur(e));
+                
+                // 点击外部关闭下拉框
+                document.addEventListener('click', (e) => {
+                    if (!this.element.contains(e.target)) {
+                        this.close();
+                    }
+                });
+            }
+            
+            setOptions(options) {
+                this.options = options;
+                this.filteredOptions = [...options];
+                this.renderOptions();
+            }
+            
+            toggle() {
+                if (this.isOpen) {
+                    this.close();
+                } else {
+                    this.open();
+                }
+            }
+            
+            open() {
+                this.isOpen = true;
+                this.element.classList.add('open');
+                this.filteredOptions = [...this.options];
+                this.renderOptions();
+                this.selectedIndex = -1;
+            }
+            
+            close() {
+                this.isOpen = false;
+                this.element.classList.remove('open');
+                this.selectedIndex = -1;
+            }
+            
+            handleInput(e) {
+                const value = e.target.value.toLowerCase();
+                this.filteredOptions = this.options.filter(option => 
+                    option.toLowerCase().includes(value)
+                );
+                this.renderOptions();
+                this.selectedIndex = -1;
+                
+                if (!this.isOpen) {
+                    this.open();
+                }
+            }
+            
+            handleKeydown(e) {
+                if (!this.isOpen) {
+                    if (e.key === 'ArrowDown' || e.key === 'Enter') {
+                        e.preventDefault();
+                        this.open();
+                    }
+                    return;
+                }
+                
+                switch (e.key) {
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        this.selectedIndex = Math.min(this.selectedIndex + 1, this.filteredOptions.length - 1);
+                        this.updateHighlight();
+                        break;
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        this.selectedIndex = Math.max(this.selectedIndex - 1, -1);
+                        this.updateHighlight();
+                        break;
+                    case 'Enter':
+                        e.preventDefault();
+                        if (this.selectedIndex >= 0) {
+                            this.selectOption(this.filteredOptions[this.selectedIndex]);
+                        }
+                        break;
+                    case 'Escape':
+                        e.preventDefault();
+                        this.close();
+                        break;
+                }
+            }
+            
+            handleBlur(e) {
+                // 延迟关闭，允许点击选项
+                setTimeout(() => {
+                    if (!this.element.contains(document.activeElement)) {
+                        this.close();
+                    }
+                }, 150);
+            }
+            
+            renderOptions() {
+                this.dropdown.innerHTML = '';
+                
+                if (this.filteredOptions.length === 0) {
+                    const noResults = document.createElement('div');
+                    noResults.className = 'custom-select-no-results';
+                    noResults.textContent = '无匹配结果';
+                    this.dropdown.appendChild(noResults);
+                    return;
+                }
+                
+                this.filteredOptions.forEach((option, index) => {
+                    const optionElement = document.createElement('div');
+                    optionElement.className = 'custom-select-option';
+                    optionElement.textContent = option;
+                    optionElement.addEventListener('click', () => this.selectOption(option));
+                    this.dropdown.appendChild(optionElement);
+                });
+            }
+            
+            updateHighlight() {
+                const options = this.dropdown.querySelectorAll('.custom-select-option');
+                options.forEach((option, index) => {
+                    option.classList.toggle('highlighted', index === this.selectedIndex);
+                });
+                
+                // 滚动到高亮选项
+                if (this.selectedIndex >= 0 && options[this.selectedIndex]) {
+                    options[this.selectedIndex].scrollIntoView({
+                        block: 'nearest'
+                    });
+                }
+            }
+            
+            selectOption(value) {
+                this.input.value = value;
+                this.close();
+                // 触发change事件
+                this.input.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }
+        
+        // 构建完整的API URL
+        function buildApiUrl(path) {
+            // 如果baseUrl为空或者path已经是完整URL，直接使用相对路径
+            if (!appConfig.baseUrl || path.startsWith('http')) {
+                return path;
+            }
+            // 确保baseUrl不以斜杠结尾，path以斜杠开头
+            const baseUrl = appConfig.baseUrl.replace(/\/$/, '');
+            const apiPath = path.startsWith('/') ? path : '/' + path;
+            return baseUrl + apiPath;
+        }
+        
+        // 加载应用配置和下拉列表配置
+        async function loadConfigs() {
+            try {
+                // 并行加载应用配置和下拉列表配置
+                const [configResponse, dropdownResponse] = await Promise.all([
+                    fetch(buildApiUrl('/api/config')),
+                    fetch(buildApiUrl('/api/dropdown-config'))
+                ]);
+                
+                appConfig = await configResponse.json();
+                dropdownConfig = await dropdownResponse.json();
+                
+                console.log('应用配置加载成功:', appConfig);
+                
+                // 初始化自定义下拉框
+                initCustomSelects();
+            } catch (error) {
+                console.error('加载配置失败:', error);
+                // 如果配置加载失败，使用默认的相对路径
+                appConfig = { baseUrl: '' };
+            }
+        }
+        
+        // 初始化自定义下拉框
+        function initCustomSelects() {
+            const customSelects = document.querySelectorAll('.custom-select');
+            customSelects.forEach(element => {
+                const customSelect = new CustomSelect(element);
+                const name = element.dataset.name;
+                
+                // 根据名称设置选项
+                if (name === 'material' && dropdownConfig.materials) {
+                    customSelect.setOptions(dropdownConfig.materials);
+                } else if (name === 'reflector_type' && dropdownConfig.reflector_types) {
+                    customSelect.setOptions(dropdownConfig.reflector_types);
+                } else if (name === 'storage_area' && dropdownConfig.storage_areas) {
+                    customSelect.setOptions(dropdownConfig.storage_areas);
+                }
+            });
+        }
+        
+        // 文件选择处理
+        document.getElementById('certificate').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const labelText = document.getElementById('file-label-text');
+            if (file) {
+                labelText.textContent = file.name;
+            } else {
+                labelText.textContent = '点击选择PDF文件或拖拽文件到此处';
+            }
+        });
+        
+        // 表单提交处理
+        document.getElementById('qrForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const generateBtn = document.getElementById('generateBtn');
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            const successAlert = document.getElementById('successAlert');
+            const errorAlert = document.getElementById('errorAlert');
+            
+            // 隐藏之前的结果和提示
+            result.style.display = 'none';
+            successAlert.style.display = 'none';
+            errorAlert.style.display = 'none';
+            
+            // 显示加载状态
+            generateBtn.disabled = true;
+            generateBtn.textContent = '生成中...';
+            loading.style.display = 'block';
+            
+            try {
+                const response = await fetch(buildApiUrl('/api/generate-qrcode'), {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // 显示成功结果
+                    const qrImage = document.getElementById('qrImage');
+                    const downloadBtn = document.getElementById('downloadBtn');
+                    
+                    qrImage.src = data.qr_image_url;
+                    downloadBtn.href = data.qr_image_url;
+                    
+                    result.style.display = 'block';
+                    successAlert.textContent = '二维码生成成功！';
+                    successAlert.style.display = 'block';
+                    
+                    // 重置表单
+                    this.reset();
+                    document.getElementById('file-label-text').textContent = '点击选择PDF文件或拖拽文件到此处';
+                } else {
+                    errorAlert.textContent = data.message || '生成失败，请重试';
+                    errorAlert.style.display = 'block';
+                }
+            } catch (error) {
+                errorAlert.textContent = '网络错误，请检查连接后重试';
+                errorAlert.style.display = 'block';
+            } finally {
+                // 恢复按钮状态
+                generateBtn.disabled = false;
+                generateBtn.textContent = '生成二维码';
+                loading.style.display = 'none';
+            }
+        });
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadConfigs();
+        });
+    </script>
+</body>
+</html>

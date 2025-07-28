@@ -1,0 +1,11 @@
+{
+  "baseUrl": "http://localhost:8000",
+  "appName": "二维码生成系统",
+  "version": "1.0.0",
+  "description": "用于生成和管理试块二维码的系统",
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8000,
+    "debug": true
+  }
+}

@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>试块信息详情</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .info-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-left: 5px solid #4facfe;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 1.1em;
+            min-width: 120px;
+        }
+
+        .info-value {
+            color: #212529;
+            font-size: 1.1em;
+            text-align: right;
+            flex: 1;
+        }
+
+        .certificate-section {
+            background: #e8f4fd;
+            border-radius: 10px;
+            padding: 25px;
+            text-align: center;
+            border: 2px dashed #4facfe;
+        }
+
+        .certificate-section h3 {
+            color: #0056b3;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .download-btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(40, 167, 69, 0.3);
+        }
+
+        .view-btn {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        }
+
+        .view-btn:hover {
+            box-shadow: 0 10px 20px rgba(0, 123, 255, 0.3);
+        }
+
+        .no-certificate {
+            color: #6c757d;
+            font-style: italic;
+            font-size: 1.1em;
+        }
+
+        .actions {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 2px solid #e9ecef;
+        }
+
+        .home-btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .home-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .timestamp {
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.9em;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .qr-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .info-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+            
+            .info-label {
+                min-width: auto;
+            }
+            
+            .info-value {
+                text-align: left;
+            }
+            
+            .download-btn {
+                display: block;
+                margin: 10px 0;
+            }
+        }
+
+        /* 添加一些动画效果 */
+        .info-card {
+            animation: slideInUp 0.6s ease-out;
+        }
+
+        .certificate-section {
+            animation: slideInUp 0.8s ease-out;
+        }
+
+        .actions {
+            animation: slideInUp 1s ease-out;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>
+                <svg class="qr-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3,11H5V13H3V11M11,5H13V9H11V5M9,11H13V15H9V11M15,11H17V13H15V11M19,11H21V13H19V11M5,19H7V21H5V19M3,5H9V9H3V5M5,7V7H7V7H5M15,19H17V21H15V19M19,19H21V21H19V19M15,5H21V9H15V5M17,7V7H19V7H17M15,13H21V19H15V13M17,15V17H19V15H17Z"/>
+                </svg>
+                试块信息详情
+            </h1>
+            <p>扫码查看的试块详细信息</p>
+        </div>
+        
+        <div class="content">
+            <div class="info-card">
+                <div class="info-item">
+                    <span class="info-label">试块编号</span>
+                    <span class="info-value">{{ record.specimen_number }}</span>
+                </div>
+                
+                <div class="info-item">
+                    <span class="info-label">材质</span>
+                    <span class="info-value">{{ record.material }}</span>
+                </div>
+                
+                <div class="info-item">
+                    <span class="info-label">人工反射体类型</span>
+                    <span class="info-value">{{ record.reflector_type }}</span>
+                </div>
+                
+                <div class="info-item">
+                    <span class="info-label">存放区域</span>
+                    <span class="info-value">{{ record.storage_area }}</span>
+                </div>
+            </div>
+            
+            <div class="certificate-section">
+                <h3>检验证书</h3>
+                {% if record.certificate_file %}
+                    <p>证书文件已上传，您可以选择在线查看或下载到本地。</p>
+                    <div>
+                        <a href="javascript:void(0)" class="download-btn view-btn" onclick="viewPDF('{{ record.certificate_file }}')">
+                            📄 在线预览
+                        </a>
+                        <a href="javascript:void(0)" class="download-btn" onclick="downloadFile('{{ record.certificate_file }}')">
+                            📥 下载证书
+                        </a>
+                    </div>
+                {% else %}
+                    <p class="no-certificate">暂无检验证书文件</p>
+                {% endif %}
+            </div>
+            
+            <div class="timestamp">
+                <p>创建时间：{{ record.created_at[:19].replace('T', ' ') }}</p>
+            </div>
+            
+            <div class="actions">
+                <a href="javascript:void(0)" class="home-btn" onclick="window.location.href = buildApiUrl('/')">🏠 返回主页</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 应用配置
+        let appConfig = { baseUrl: 'http://localhost:8000' };
+        
+        // 构建完整的API URL
+        function buildApiUrl(path) {
+            // 如果baseUrl为空或者path已经是完整URL，直接使用相对路径
+            if (!appConfig.baseUrl || path.startsWith('http')) {
+                return path;
+            }
+            // 确保baseUrl不以斜杠结尾，path以斜杠开头
+            const baseUrl = appConfig.baseUrl.replace(/\/$/, '');
+            const apiPath = path.startsWith('/') ? path : '/' + path;
+            return baseUrl + apiPath;
+        }
+        
+        // 下载文件函数
+        function downloadFile(filename) {
+            const link = document.createElement('a');
+            link.href = buildApiUrl('/api/download/' + filename);
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // PDF在线预览函数
+        function viewPDF(filename) {
+            const pdfViewerUrl = buildApiUrl('/pdf-viewer?file=' + encodeURIComponent(filename));
+            window.open(pdfViewerUrl, '_blank');
+        }
+        
+        // 添加页面加载动画
+        document.addEventListener('DOMContentLoaded', function() {
+            // 为页面添加淡入效果
+            document.body.style.opacity = '0';
+            document.body.style.transition = 'opacity 0.5s ease-in';
+            
+            setTimeout(() => {
+                document.body.style.opacity = '1';
+            }, 100);
+            
+            // 检查是否是移动设备
+            if (window.innerWidth <= 768) {
+                // 移动设备优化
+                const container = document.querySelector('.container');
+                container.style.margin = '10px';
+                container.style.borderRadius = '10px';
+            }
+        });
+        
+        // 添加点击反馈效果
+        document.querySelectorAll('.download-btn, .home-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                // 创建点击波纹效果
+                const ripple = document.createElement('span');
+                const rect = this.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                const x = e.clientX - rect.left - size / 2;
+                const y = e.clientY - rect.top - size / 2;
+                
+                ripple.style.cssText = `
+                    position: absolute;
+                    width: ${size}px;
+                    height: ${size}px;
+                    left: ${x}px;
+                    top: ${y}px;
+                    background: rgba(255,255,255,0.3);
+                    border-radius: 50%;
+                    transform: scale(0);
+                    animation: ripple 0.6s linear;
+                    pointer-events: none;
+                `;
+                
+                this.style.position = 'relative';
+                this.style.overflow = 'hidden';
+                this.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            });
+        });
+        
+        // 添加CSS动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

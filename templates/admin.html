@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员面板 - 二维码生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: #f5f6fa;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.8em;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #4facfe;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e1e5e9;
+            border-radius: 6px;
+            font-size: 1em;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .table th,
+        .table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e1e5e9;
+        }
+
+        .table th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 0.8em;
+            margin: 0 2px;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .alert {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 6px;
+            display: none;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .close {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #aaa;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .config-item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+        }
+
+        .config-item h4 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #e9ecef;
+            padding: 4px 8px;
+            margin: 2px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 768px) {
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .table {
+                font-size: 0.9em;
+            }
+            
+            .container {
+                padding: 20px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>管理员面板</h1>
+            <div class="header-actions">
+                <a href="javascript:void(0)" class="btn btn-secondary" onclick="window.location.href = buildApiUrl('/')">返回主页</a>
+                <button onclick="logout()" class="btn btn-secondary logout-btn">登出</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="alert alert-success" id="successAlert"></div>
+        <div class="alert alert-error" id="errorAlert"></div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('records')">记录管理</button>
+            <button class="tab" onclick="showTab('config')">配置管理</button>
+
+            <button class="tab" onclick="showTab('password')">密码管理</button>
+            <button class="tab" onclick="showTab('logs')">操作日志</button>
+        </div>
+
+        <!-- 记录管理 -->
+        <div id="records" class="tab-content active">
+            <h2>记录管理</h2>
+            <p>管理所有提交的试块信息记录</p>
+            
+            <div id="recordsList">
+                <!-- 记录列表将通过JavaScript动态加载 -->
+            </div>
+        </div>
+
+        <!-- 配置管理 -->
+        <div id="config" class="tab-content">
+            <h2>下拉列表配置</h2>
+            <p>管理主页面下拉列表的选项内容</p>
+            
+            <div class="config-item">
+                <h4>材质选项</h4>
+                <div id="materialTags"></div>
+                <button class="btn btn-primary" onclick="editConfig('materials')">编辑</button>
+            </div>
+            
+            <div class="config-item">
+                <h4>人工反射体类型</h4>
+                <div id="reflectorTags"></div>
+                <button class="btn btn-primary" onclick="editConfig('reflector_types')">编辑</button>
+            </div>
+            
+            <div class="config-item">
+                <h4>存放区域</h4>
+                <div id="storageTags"></div>
+                <button class="btn btn-primary" onclick="editConfig('storage_areas')">编辑</button>
+            </div>
+        </div>
+
+
+
+        <!-- 密码管理 -->
+        <div id="password" class="tab-content">
+            <h2>密码管理</h2>
+            <p>修改管理员登录密码</p>
+            
+            <form id="passwordForm">
+                <div class="form-group">
+                    <label for="currentPassword">当前密码</label>
+                    <input type="password" id="currentPassword" name="currentPassword" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="newPassword">新密码</label>
+                    <input type="password" id="newPassword" name="newPassword" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirmPassword">确认新密码</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">修改密码</button>
+            </form>
+        </div>
+
+        <!-- 操作日志 -->
+        <div id="logs" class="tab-content">
+            <h2>操作日志</h2>
+            <p>查看所有管理员操作记录（只读）</p>
+            
+            <div id="logsList">
+                <!-- 日志列表将通过JavaScript动态加载 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑配置模态框 -->
+    <div id="configModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h3 id="modalTitle">编辑配置</h3>
+            <form id="configForm">
+                <div class="form-group">
+                    <label for="configItems">选项列表（每行一个）</label>
+                    <textarea id="configItems" name="configItems" rows="8" placeholder="请输入选项，每行一个"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">保存</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 编辑记录模态框 -->
+    <div id="recordModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeRecordModal()">&times;</span>
+            <h3>编辑记录</h3>
+            <form id="recordForm">
+                <input type="hidden" id="recordId" name="recordId">
+                <div class="form-group">
+                    <label for="editSpecimenNumber">试块编号</label>
+                    <input type="text" id="editSpecimenNumber" name="specimen_number" required>
+                </div>
+                <div class="form-group">
+                    <label for="editMaterial">材质</label>
+                    <input type="text" id="editMaterial" name="material" required>
+                </div>
+                <div class="form-group">
+                    <label for="editReflectorType">人工反射体类型</label>
+                    <input type="text" id="editReflectorType" name="reflector_type" required>
+                </div>
+                <div class="form-group">
+                    <label for="editStorageArea">存放区域</label>
+                    <input type="text" id="editStorageArea" name="storage_area" required>
+                </div>
+                <button type="submit" class="btn btn-primary">保存</button>
+                <button type="button" class="btn btn-secondary" onclick="closeRecordModal()">取消</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentConfigType = '';
+        let appConfig = { baseUrl: 'http://localhost:8000' }; // 应用配置，包含baseUrl
+        
+        // 构建完整的API URL
+        function buildApiUrl(path) {
+            // 如果baseUrl为空或者path已经是完整URL，直接使用相对路径
+            if (!appConfig.baseUrl || path.startsWith('http')) {
+                return path;
+            }
+            // 确保baseUrl不以斜杠结尾，path以斜杠开头
+            const baseUrl = appConfig.baseUrl.replace(/\/$/, '');
+            const apiPath = path.startsWith('/') ? path : '/' + path;
+            return baseUrl + apiPath;
+        }
+        
+        // 加载应用配置
+        async function loadAppConfig() {
+            try {
+                const response = await fetch(buildApiUrl('/api/config'));
+                appConfig = await response.json();
+                console.log('应用配置加载成功:', appConfig);
+            } catch (error) {
+                console.error('加载应用配置失败:', error);
+                // 如果配置加载失败，使用默认的相对路径
+                appConfig = { baseUrl: '' };
+            }
+        }
+        
+        // 标签页切换
+        function showTab(tabName) {
+            // 隐藏所有标签页内容
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.remove('active'));
+            
+            // 移除所有标签页的active类
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // 显示选中的标签页内容
+            const targetContent = document.getElementById(tabName);
+            if (targetContent) {
+                targetContent.classList.add('active');
+            }
+            
+            // 激活对应的标签按钮
+            const targetTab = event.target;
+            if (targetTab) {
+                targetTab.classList.add('active');
+            }
+            
+            // 根据标签页加载相应数据
+            if (tabName === 'records') {
+                loadRecords();
+            } else if (tabName === 'config') {
+                loadConfig();
+
+            } else if (tabName === 'logs') {
+                loadLogs();
+            }
+        }
+        
+        // 显示提示信息
+        function showAlert(message, type = 'success') {
+            const alertElement = document.getElementById(type === 'success' ? 'successAlert' : 'errorAlert');
+            alertElement.textContent = message;
+            alertElement.style.display = 'block';
+            
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                alertElement.style.display = 'none';
+            }, 3000);
+        }
+        
+        // 统一的fetch请求处理函数
+        async function fetchWithAuth(url, options = {}) {
+            const response = await fetch(buildApiUrl(url), options);
+            if (response.status === 401) {
+                alert('会话已过期，请重新登录');
+                window.location.href = buildApiUrl('/admin');
+                throw new Error('Session expired');
+            }
+            return response;
+        }
+
+        // 加载记录列表
+        async function loadRecords() {
+            try {
+                const response = await fetchWithAuth('/api/admin/records');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const recordsList = document.getElementById('recordsList');
+                    
+                    if (data.records.length === 0) {
+                        recordsList.innerHTML = '<p>暂无记录</p>';
+                        return;
+                    }
+                    
+                    let html = `
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>试块编号</th>
+                                    <th>材质</th>
+                                    <th>反射体类型</th>
+                                    <th>存放区域</th>
+                                    <th>创建时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    
+                    data.records.forEach(record => {
+                        const createdAt = record.created_at ? record.created_at.substring(0, 19).replace('T', ' ') : '未知';
+                        html += `
+                            <tr>
+                                <td>${record.specimen_number}</td>
+                                <td>${record.material}</td>
+                                <td>${record.reflector_type}</td>
+                                <td>${record.storage_area}</td>
+                                <td>${createdAt}</td>
+                                <td>
+                                    <button class="btn btn-small btn-warning" onclick="editRecord('${record.id}')">编辑</button>
+                                    <button class="btn btn-small btn-danger" onclick="deleteRecord('${record.id}')">删除</button>
+                                    <a href="javascript:void(0)" class="btn btn-small btn-primary" onclick="window.open(buildApiUrl('/view/${record.id}'), '_blank')">查看</a>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    html += '</tbody></table>';
+                    recordsList.innerHTML = html;
+                } else {
+                    showAlert(data.message || '加载记录失败', 'error');
+                }
+            } catch (error) {
+                if (error.message !== 'Session expired') {
+                    showAlert('网络错误，请重试', 'error');
+                }
+            }
+        }
+        
+        // 加载配置
+        async function loadConfig() {
+            try {
+                const response = await fetchWithAuth('/api/dropdown-config');
+                const config = await response.json();
+                
+                // 显示材质选项
+                const materialTags = document.getElementById('materialTags');
+                materialTags.innerHTML = config.materials.map(item => 
+                    `<span class="tag">${item}</span>`
+                ).join('');
+                
+                // 显示反射体类型
+                const reflectorTags = document.getElementById('reflectorTags');
+                reflectorTags.innerHTML = config.reflector_types.map(item => 
+                    `<span class="tag">${item}</span>`
+                ).join('');
+                
+                // 显示存放区域
+                const storageTags = document.getElementById('storageTags');
+                storageTags.innerHTML = config.storage_areas.map(item => 
+                    `<span class="tag">${item}</span>`
+                ).join('');
+                
+            } catch (error) {
+                if (error.message !== 'Session expired') {
+                    showAlert('加载配置失败', 'error');
+                }
+            }
+        }
+        
+        // 加载操作日志
+        async function loadLogs() {
+            try {
+                const response = await fetchWithAuth('/api/admin/logs');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const logsList = document.getElementById('logsList');
+                    
+                    if (data.logs.length === 0) {
+                        logsList.innerHTML = '<p>暂无操作日志</p>';
+                        return;
+                    }
+                    
+                    let html = `
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>时间</th>
+                                    <th>操作类型</th>
+                                    <th>操作详情</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    
+                    data.logs.forEach(log => {
+                        const timestamp = log.timestamp ? log.timestamp.substring(0, 19).replace('T', ' ') : '未知';
+                        const operationType = {
+                            'update_record': '更新记录',
+                            'delete_record': '删除记录',
+                            'update_config': '更新配置',
+                            'change_password': '修改密码'
+                        }[log.operation_type] || log.operation_type;
+                        
+                        html += `
+                            <tr>
+                                <td>${timestamp}</td>
+                                <td>${operationType}</td>
+                                <td>
+                                    <details>
+                                        <summary>查看详情</summary>
+                                        <pre style="font-size: 0.8em; margin-top: 10px;">${JSON.stringify({before: log.before_state, after: log.after_state}, null, 2)}</pre>
+                                    </details>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    html += '</tbody></table>';
+                    logsList.innerHTML = html;
+                } else {
+                    showAlert(data.message || '加载日志失败', 'error');
+                }
+            } catch (error) {
+                if (error.message !== 'Session expired') {
+                    showAlert('网络错误，请重试', 'error');
+                }
+            }
+        }
+        
+        // 编辑配置
+        function editConfig(type) {
+            currentConfigType = type;
+            const modal = document.getElementById('configModal');
+            const title = document.getElementById('modalTitle');
+            const textarea = document.getElementById('configItems');
+            
+            const titles = {
+                'materials': '编辑材质选项',
+                'reflector_types': '编辑人工反射体类型',
+                'storage_areas': '编辑存放区域'
+            };
+            
+            title.textContent = titles[type];
+            
+            // 获取当前配置并填充到文本框
+            fetch(buildApiUrl('/api/dropdown-config'))
+                .then(response => response.json())
+                .then(config => {
+                    textarea.value = config[type].join('\n');
+                    modal.style.display = 'block';
+                })
+                .catch(error => {
+                    showAlert('获取配置失败', 'error');
+                });
+        }
+        
+        // 关闭配置模态框
+        function closeModal() {
+            document.getElementById('configModal').style.display = 'none';
+        }
+        
+        // 关闭记录模态框
+        function closeRecordModal() {
+            document.getElementById('recordModal').style.display = 'none';
+        }
+        
+        // 编辑记录
+        async function editRecord(recordId) {
+            try {
+                const response = await fetchWithAuth('/api/admin/records');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const record = data.records.find(r => r.id === recordId);
+                    if (record) {
+                        document.getElementById('recordId').value = record.id;
+                        document.getElementById('editSpecimenNumber').value = record.specimen_number;
+                        document.getElementById('editMaterial').value = record.material;
+                        document.getElementById('editReflectorType').value = record.reflector_type;
+                        document.getElementById('editStorageArea').value = record.storage_area;
+                        
+                        document.getElementById('recordModal').style.display = 'block';
+                    }
+                }
+            } catch (error) {
+                if (error.message !== 'Session expired') {
+                    showAlert('获取记录信息失败', 'error');
+                }
+            }
+        }
+        
+        // 删除记录
+        async function deleteRecord(recordId) {
+            if (!confirm('确定要删除这条记录吗？此操作不可恢复！')) {
+                return;
+            }
+            
+            try {
+                const response = await fetchWithAuth(`/api/admin/record/${recordId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert('记录删除成功');
+                    loadRecords(); // 重新加载记录列表
+                } else {
+                    showAlert(data.message || '删除失败', 'error');
+                }
+            } catch (error) {
+                if (error.message !== 'Session expired') {
+                    showAlert('网络错误，请重试', 'error');
+                }
+            }
+        }
+        
+        // 配置表单提交
+        document.getElementById('configForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const items = document.getElementById('configItems').value
+                .split('\n')
+                .map(item => item.trim())
+                .filter(item => item.length > 0);
+            
+            if (items.length === 0) {
+                showAlert('请至少添加一个选项', 'error');
+                return;
+            }
+            
+            try {
+                // 获取当前配置
+                const configResponse = await fetchWithAuth('/api/dropdown-config');
+                const currentConfig = await configResponse.json();
+                
+                // 更新指定类型的配置
+                currentConfig[currentConfigType] = items;
+                
+                // 保存配置
+                const response = await fetchWithAuth('/api/admin/config', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(currentConfig)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert('配置保存成功');
+                    closeModal();
+                    loadConfig(); // 重新加载配置
+                } else {
+                    showAlert(data.message || '保存失败', 'error');
+                }
+            } catch (error) {
+                if (error.message !== 'Session expired') {
+                    showAlert('网络错误，请重试', 'error');
+                }
+            }
+        });
+        
+        // 记录编辑表单提交
+        document.getElementById('recordForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const recordId = document.getElementById('recordId').value;
+            const formData = {
+                specimen_number: document.getElementById('editSpecimenNumber').value,
+                material: document.getElementById('editMaterial').value,
+                reflector_type: document.getElementById('editReflectorType').value,
+                storage_area: document.getElementById('editStorageArea').value
+            };
+            
+            try {
+                const response = await fetchWithAuth(`/api/admin/record/${recordId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert('记录更新成功');
+                    closeRecordModal();
+                    loadRecords(); // 重新加载记录列表
+                } else {
+                    showAlert(data.message || '更新失败', 'error');
+                }
+            } catch (error) {
+                if (error.message !== 'Session expired') {
+                    showAlert('网络错误，请重试', 'error');
+                }
+            }
+        });
+        
+        // 密码表单提交
+        document.getElementById('passwordForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (newPassword !== confirmPassword) {
+                showAlert('两次输入的密码不一致', 'error');
+                return;
+            }
+            
+            if (newPassword.length < 5) {
+                showAlert('新密码长度至少5位', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetchWithAuth('/api/admin/password', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        current_password: currentPassword,
+                        new_password: newPassword
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert('密码修改成功');
+                    this.reset(); // 清空表单
+                } else {
+                    showAlert(data.message || '修改失败', 'error');
+                }
+            } catch (error) {
+                if (error.message !== 'Session expired') {
+                    showAlert('网络错误，请重试', 'error');
+                }
+            }
+        });
+        
+
+        
+
+        
+        // 检查会话状态
+        function checkSession() {
+            fetchWithAuth('/api/admin/records')
+                .catch(error => {
+                    if (error.message !== 'Session expired') {
+                        console.error('会话检查失败:', error);
+                    }
+                });
+        }
+
+        // 定期检查会话状态（每5分钟检查一次）
+        setInterval(checkSession, 5 * 60 * 1000);
+
+        // 登出功能
+        async function logout() {
+            if (confirm('确定要登出吗？')) {
+                try {
+                    const response = await fetch(buildApiUrl('/admin/logout'), {
+                        method: 'POST'
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        alert('已成功登出');
+                        window.location.href = buildApiUrl('/admin');
+                    }
+                } catch (error) {
+                    console.error('登出失败:', error);
+                    // 即使请求失败也跳转到登录页面
+                    window.location.href = buildApiUrl('/admin');
+                }
+            }
+        }
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 先加载应用配置
+            await loadAppConfig();
+            // 然后加载记录和检查会话
+            loadRecords();
+            checkSession();
+        });
+        
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            const configModal = document.getElementById('configModal');
+            const recordModal = document.getElementById('recordModal');
+            if (event.target === configModal) {
+                configModal.style.display = 'none';
+            }
+            if (event.target === recordModal) {
+                recordModal.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

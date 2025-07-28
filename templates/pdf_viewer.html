@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF在线预览 - 二维码生成系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            padding: 15px 0;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 1.8em;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .container {
+            flex: 1;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pdf-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 600px;
+        }
+
+        .pdf-toolbar {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .pdf-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .pdf-info {
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .control-btn {
+            padding: 8px 12px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s ease;
+        }
+
+        .control-btn:hover {
+            background: #0056b3;
+        }
+
+        .control-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .zoom-controls {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .zoom-input {
+            width: 60px;
+            padding: 4px 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .pdf-viewer {
+            flex: 1;
+            overflow: auto;
+            background: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+        }
+
+        .pdf-canvas {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            background: white;
+            margin: 0 auto;
+            display: block;
+        }
+
+        .loading {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 400px;
+            color: #6c757d;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e9ecef;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 400px;
+            color: #dc3545;
+            text-align: center;
+        }
+
+        .error-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .pdf-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .pdf-controls {
+                justify-content: center;
+            }
+
+            .container {
+                margin: 10px auto;
+                padding: 0 10px;
+            }
+
+            .pdf-viewer {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>📄 PDF在线预览</h1>
+            <div class="header-actions">
+                <a href="javascript:void(0)" class="btn btn-primary" onclick="downloadPDF()">📥 下载PDF</a>
+                <a href="javascript:void(0)" class="btn btn-secondary" onclick="goBack()">🔙 返回</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="pdf-container">
+            <div class="pdf-toolbar">
+                <div class="pdf-controls">
+                    <button class="control-btn" id="prevPage" onclick="prevPage()">⬅️ 上一页</button>
+                    <span class="pdf-info">
+                        第 <span id="currentPage">1</span> 页 / 共 <span id="totalPages">-</span> 页
+                    </span>
+                    <button class="control-btn" id="nextPage" onclick="nextPage()">下一页 ➡️</button>
+                </div>
+                <div class="zoom-controls">
+                    <button class="control-btn" onclick="zoomOut()">🔍-</button>
+                    <input type="number" class="zoom-input" id="zoomLevel" value="100" min="25" max="300" step="25" onchange="setZoom()">
+                    <span style="color: #6c757d;">%</span>
+                    <button class="control-btn" onclick="zoomIn()">🔍+</button>
+                    <button class="control-btn" onclick="fitToWidth()">适应宽度</button>
+                </div>
+            </div>
+            <div class="pdf-viewer" id="pdfViewer">
+                <div class="loading" id="loading">
+                    <div class="loading-spinner"></div>
+                    <p>正在加载PDF文件...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PDF.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        // 应用配置
+        let appConfig = { baseUrl: 'http://localhost:8000' };
+        
+        // 构建完整的API URL
+        function buildApiUrl(path) {
+            if (!appConfig.baseUrl || path.startsWith('http')) {
+                return path;
+            }
+            const baseUrl = appConfig.baseUrl.replace(/\/$/, '');
+            const apiPath = path.startsWith('/') ? path : '/' + path;
+            return baseUrl + apiPath;
+        }
+
+        // PDF.js 配置
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // 全局变量
+        let pdfDoc = null;
+        let currentPage = 1;
+        let totalPages = 0;
+        let scale = 1.0;
+        let canvas = null;
+        let ctx = null;
+        let filename = '';
+
+        /**
+         * 获取应用配置
+         */
+        async function fetchAppConfig() {
+            try {
+                const response = await fetch(buildApiUrl('/api/config'));
+                if (response.ok) {
+                    const config = await response.json();
+                    appConfig.baseUrl = config.baseUrl || '';
+                }
+            } catch (error) {
+                console.warn('获取配置失败，使用默认配置:', error);
+            }
+        }
+
+        /**
+         * 初始化PDF查看器
+         */
+        async function initPDFViewer() {
+            // 先获取应用配置
+            await fetchAppConfig();
+            
+            // 从URL参数获取文件名
+            const urlParams = new URLSearchParams(window.location.search);
+            filename = urlParams.get('file');
+            
+            if (!filename) {
+                showError('未指定PDF文件');
+                return;
+            }
+
+            // 加载PDF文件
+            loadPDF(filename);
+        }
+
+        /**
+         * 加载PDF文件
+         * @param {string} filename - PDF文件名
+         */
+        async function loadPDF(filename) {
+            try {
+                const url = buildApiUrl(`/api/download/${filename}`);
+                
+                // 加载PDF文档
+                const loadingTask = pdfjsLib.getDocument(url);
+                pdfDoc = await loadingTask.promise;
+                
+                totalPages = pdfDoc.numPages;
+                document.getElementById('totalPages').textContent = totalPages;
+                
+                // 隐藏加载提示（在createCanvas之前，因为createCanvas会清除loading元素）
+                const loadingElement = document.getElementById('loading');
+                if (loadingElement) {
+                    loadingElement.style.display = 'none';
+                }
+                
+                // 创建canvas
+                createCanvas();
+                
+                // 渲染第一页
+                await renderPage(1);
+                
+                // 更新控件状态
+                updateControls();
+                
+            } catch (error) {
+                console.error('PDF加载失败:', error);
+                showError('PDF文件加载失败，请检查文件是否存在或网络连接');
+            }
+        }
+
+        /**
+         * 创建canvas元素
+         */
+        function createCanvas() {
+            const viewer = document.getElementById('pdfViewer');
+            
+            // 清除现有内容
+            viewer.innerHTML = '';
+            
+            // 创建新的canvas
+            canvas = document.createElement('canvas');
+            canvas.className = 'pdf-canvas';
+            ctx = canvas.getContext('2d');
+            
+            viewer.appendChild(canvas);
+        }
+
+        /**
+         * 渲染指定页面
+         * @param {number} pageNum - 页码
+         */
+        async function renderPage(pageNum) {
+            if (!pdfDoc || pageNum < 1 || pageNum > totalPages) {
+                return;
+            }
+
+            try {
+                const page = await pdfDoc.getPage(pageNum);
+                const viewport = page.getViewport({ scale: scale });
+                
+                // 设置canvas尺寸
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                
+                // 渲染页面
+                const renderContext = {
+                    canvasContext: ctx,
+                    viewport: viewport
+                };
+                
+                await page.render(renderContext).promise;
+                
+                // 更新当前页码
+                currentPage = pageNum;
+                document.getElementById('currentPage').textContent = currentPage;
+                
+            } catch (error) {
+                console.error('页面渲染失败:', error);
+                showError('页面渲染失败');
+            }
+        }
+
+        /**
+         * 上一页
+         */
+        async function prevPage() {
+            if (currentPage > 1) {
+                await renderPage(currentPage - 1);
+                updateControls();
+            }
+        }
+
+        /**
+         * 下一页
+         */
+        async function nextPage() {
+            if (currentPage < totalPages) {
+                await renderPage(currentPage + 1);
+                updateControls();
+            }
+        }
+
+        /**
+         * 放大
+         */
+        async function zoomIn() {
+            if (scale < 3.0) {
+                scale += 0.25;
+                await renderPage(currentPage);
+                updateZoomDisplay();
+            }
+        }
+
+        /**
+         * 缩小
+         */
+        async function zoomOut() {
+            if (scale > 0.25) {
+                scale -= 0.25;
+                await renderPage(currentPage);
+                updateZoomDisplay();
+            }
+        }
+
+        /**
+         * 设置缩放比例
+         */
+        async function setZoom() {
+            const zoomInput = document.getElementById('zoomLevel');
+            const newScale = parseInt(zoomInput.value) / 100;
+            
+            if (newScale >= 0.25 && newScale <= 3.0) {
+                scale = newScale;
+                await renderPage(currentPage);
+            } else {
+                updateZoomDisplay();
+            }
+        }
+
+        /**
+         * 适应宽度 - 适应设备宽度
+         */
+        async function fitToWidth() {
+            if (!pdfDoc) return;
+            
+            try {
+                const page = await pdfDoc.getPage(currentPage);
+                const viewport = page.getViewport({ scale: 1.0 });
+                
+                // 使用设备的实际宽度，减去一些边距以确保显示完整
+                const deviceWidth = window.innerWidth;
+                const availableWidth = deviceWidth - 80; // 减去左右边距
+                
+                scale = availableWidth / viewport.width;
+                
+                // 限制缩放范围
+                if (scale > 3.0) scale = 3.0;
+                if (scale < 0.25) scale = 0.25;
+                
+                await renderPage(currentPage);
+                updateZoomDisplay();
+            } catch (error) {
+                console.error('适应宽度失败:', error);
+            }
+        }
+
+        /**
+         * 更新缩放显示
+         */
+        function updateZoomDisplay() {
+            document.getElementById('zoomLevel').value = Math.round(scale * 100);
+        }
+
+        /**
+         * 更新控件状态
+         */
+        function updateControls() {
+            document.getElementById('prevPage').disabled = currentPage <= 1;
+            document.getElementById('nextPage').disabled = currentPage >= totalPages;
+        }
+
+        /**
+         * 显示错误信息
+         * @param {string} message - 错误信息
+         */
+        function showError(message) {
+            const viewer = document.getElementById('pdfViewer');
+            viewer.innerHTML = `
+                <div class="error">
+                    <div class="error-icon">❌</div>
+                    <h3>加载失败</h3>
+                    <p>${message}</p>
+                    <button class="btn btn-primary" onclick="location.reload()">重新加载</button>
+                </div>
+            `;
+        }
+
+        /**
+         * 下载PDF文件
+         */
+        function downloadPDF() {
+            if (filename) {
+                const link = document.createElement('a');
+                link.href = buildApiUrl(`/api/download/${filename}`);
+                // 确保下载的文件名有.pdf扩展名
+                let downloadName = filename;
+                if (!downloadName.toLowerCase().endsWith('.pdf')) {
+                    downloadName += '.pdf';
+                }
+                link.download = downloadName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+        /**
+         * 返回上一页
+         */
+        function goBack() {
+            try {
+                // 优先使用浏览器历史记录返回
+                if (document.referrer && document.referrer !== window.location.href) {
+                    window.location.href = document.referrer;
+                } else {
+                    // 如果没有历史记录，跳转到首页
+                    window.location.href = buildApiUrl('/');
+                }
+            } catch (error) {
+                console.error('返回失败:', error);
+                // 出错时直接跳转到首页
+                window.location.href = buildApiUrl('/');
+            }
+        }
+
+        // 键盘快捷键
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    prevPage();
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    nextPage();
+                    break;
+                case '+':
+                case '=':
+                    e.preventDefault();
+                    zoomIn();
+                    break;
+                case '-':
+                    e.preventDefault();
+                    zoomOut();
+                    break;
+            }
+        });
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initPDFViewer();
+        });
+    </script>
+</body>
+</html>

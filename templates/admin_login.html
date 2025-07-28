@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员登录 - 二维码生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .login-header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .login-header p {
+            opacity: 0.9;
+        }
+
+        .login-form {
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .back-link:hover {
+            color: #764ba2;
+        }
+
+        .alert {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .loading .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4facfe;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 480px) {
+            .login-form {
+                padding: 20px;
+            }
+            
+            .login-header {
+                padding: 20px;
+            }
+            
+            .login-header h1 {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>管理员登录</h1>
+            <p>请输入管理员密码</p>
+        </div>
+        
+        <div class="login-form">
+            <div class="alert alert-error" id="errorAlert"></div>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                
+                <button type="submit" class="login-btn" id="loginBtn">
+                    登录
+                </button>
+            </form>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>验证中...</p>
+            </div>
+            
+            <a href="javascript:void(0)" class="back-link" onclick="window.location.href = buildApiUrl('/')">返回主页</a>
+        </div>
+    </div>
+
+    <script>
+        let appConfig = { baseUrl: 'http://localhost:8000' }; // 应用配置，包含baseUrl
+        
+        // 构建完整的API URL
+        function buildApiUrl(path) {
+            // 如果baseUrl为空或者path已经是完整URL，直接使用相对路径
+            if (!appConfig.baseUrl || path.startsWith('http')) {
+                return path;
+            }
+            // 确保baseUrl不以斜杠结尾，path以斜杠开头
+            const baseUrl = appConfig.baseUrl.replace(/\/$/, '');
+            const apiPath = path.startsWith('/') ? path : '/' + path;
+            return baseUrl + apiPath;
+        }
+        
+        // 加载应用配置
+        async function loadAppConfig() {
+            try {
+                const response = await fetch(buildApiUrl('/api/config'));
+                appConfig = await response.json();
+                console.log('应用配置加载成功:', appConfig);
+            } catch (error) {
+                console.error('加载应用配置失败:', error);
+                // 如果配置加载失败，使用默认的相对路径
+                appConfig = { baseUrl: '' };
+            }
+        }
+        
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const loginBtn = document.getElementById('loginBtn');
+            const loading = document.getElementById('loading');
+            const errorAlert = document.getElementById('errorAlert');
+            
+            // 隐藏错误提示
+            errorAlert.style.display = 'none';
+            
+            // 显示加载状态
+            loginBtn.disabled = true;
+            loginBtn.textContent = '验证中...';
+            loading.style.display = 'block';
+            
+            try {
+                const response = await fetch(buildApiUrl('/admin/login'), {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // 登录成功，跳转到管理页面
+                    window.location.href = buildApiUrl('/admin');
+                } else {
+                    errorAlert.textContent = data.message || '登录失败，请重试';
+                    errorAlert.style.display = 'block';
+                }
+            } catch (error) {
+                errorAlert.textContent = '网络错误，请检查连接后重试';
+                errorAlert.style.display = 'block';
+            } finally {
+                // 恢复按钮状态
+                loginBtn.disabled = false;
+                loginBtn.textContent = '登录';
+                loading.style.display = 'none';
+            }
+        });
+        
+        // 自动聚焦密码输入框
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 先加载应用配置
+            await loadAppConfig();
+            // 然后聚焦密码输入框
+            document.getElementById('password').focus();
+        });
+    </script>
+</body>
+</html>
