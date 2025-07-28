@@ -47,8 +47,8 @@
 
 1. **克隆项目**
 ```bash
-git clone <repository-url>
-cd QRcode2
+git clone https://github.com/bbyas22/QRcode.git
+cd QRcode
 ```
 
 2. **安装依赖**
