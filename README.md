@@ -78,21 +78,14 @@ python app.py
   "version": "1.0.0",
   "description": "用于生成和管理试块二维码的系统",
   "server": {
-    "host": "0.0.0.0",
+    "host": "127.0.0.1",
     "port": 8000,
     "debug": false
   }
 }
 ```
 
-#### 2. 安全配置
-
-修改 `app.py` 中的密钥：
-```python
-app.secret_key = 'your-production-secret-key-change-this'
-```
-
-#### 3. Nginx反向代理配置
+#### 2. Nginx反向代理配置
 ```nginx
 server {
     listen 80;
